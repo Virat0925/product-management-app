@@ -1,7 +1,6 @@
 Product Management App
 
-A modern, responsive React-based Product Management Application that allows users to view, search, add, edit, and paginate products efficiently.
-Built as part of a technical interview assignment, following industry best practices in performance, accessibility, and clean code.
+A modern, responsive React-based Product Management Application that allows users to view, search, add, edit, and paginate products efficiently, following industry best practices in performance, accessibility, and clean code.
 
 📌 Features
 1. Product Listing
@@ -51,6 +50,8 @@ Page clamping (no invalid pages)
 Accessible labels
 
 🛠 Tech Stack
+
+JavaScript
 
 React (Vite)
 
@@ -110,7 +111,7 @@ npm run dev
 
 
 App will be available at:
-http://localhost:5173
+product-management-app-theta.vercel.app
 
 🌐 Deployment
 
@@ -141,27 +142,11 @@ Pagination	✅
 In-memory state update	✅
 GitHub repo link	✅
 Live deployed site	✅
-✨ Extra Improvements (Beyond Requirements)
 
-ESC-to-close modal
-
-Autofocus on first input
-
-Error messages with ARIA bindings
-
-Locale-based currency formatting
-
-Accessible pagination ellipsis
-
-Fully cleaned & documented useDebounce hook
-
-Fully optimized rendering for list views
-
-Stronger form validation and error handling
 
 👨‍💻 Author
 
-Virat Singh
+Virat Singh Bhadauriya
 
 📄 License
 
