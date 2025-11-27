@@ -36,36 +36,72 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
     return pages;
   };
 
+  const safeChange = (page) => {
+    if (typeof page !== "number") return;
+    const clamped = Math.max(1, Math.min(totalPages || 1, page));
+    if (clamped !== currentPage) onPageChange(clamped);
+  };
+
+  // nothing to render
+  if (!totalPages || totalPages <= 1) return null;
+
   return (
-    <div className="flex items-center justify-center gap-2 mt-6">
+    <div
+      className="flex items-center justify-center gap-2 mt-6"
+      role="navigation"
+      aria-label="Pagination"
+    >
       <button
-        onClick={() => onPageChange(currentPage - 1)}
+        type="button"
+        onClick={() => safeChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Previous page"
         className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
 
-      {getPageNumbers().map((page, index) => (
-        <button
-          key={index}
-          onClick={() => typeof page === "number" && onPageChange(page)}
-          disabled={page === "..."}
-          className={`min-w-[40px] px-3 py-2 rounded-lg font-medium transition-colors ${
-            page === currentPage
-              ? "bg-blue-600 text-white"
-              : page === "..."
-              ? "cursor-default"
-              : "border border-gray-300 hover:bg-gray-50"
-          }`}
-        >
-          {page}
-        </button>
-      ))}
+      {getPageNumbers().map((page, index) => {
+        const isEllipsis = page === "...";
+        const isActive = page === currentPage;
+        const key = isEllipsis ? `ellipsis-${index}` : `page-${page}`;
+
+        if (isEllipsis) {
+          // Render a non-interactive ellipsis element instead of a disabled button
+          return (
+            <span
+              key={key}
+              className="min-w-[40px] px-3 py-2 rounded-lg font-medium text-center cursor-default select-none text-gray-500"
+              aria-hidden="true"
+            >
+              …
+            </span>
+          );
+        }
+
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => safeChange(page)}
+            aria-current={isActive ? "page" : undefined}
+            aria-label={`Go to page ${page}`}
+            className={`min-w-[40px] px-3 py-2 rounded-lg font-medium transition-colors ${
+              isActive
+                ? "bg-blue-600 text-white"
+                : "border border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            {page}
+          </button>
+        );
+      })}
 
       <button
-        onClick={() => onPageChange(currentPage + 1)}
+        type="button"
+        onClick={() => safeChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Next page"
         className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronRight className="w-5 h-5" />

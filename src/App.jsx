@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Search, Plus, Grid3x3, List } from "lucide-react";
 import ProductCard from "./components/ProductCard";
 import ProductTable from "./components/ProductTable";
@@ -7,63 +7,106 @@ import Pagination from "./components/Pagination";
 import { useDebounce } from "./hooks/useDebounce";
 import productsData from "./data/products.json";
 
+const ITEMS_PER_PAGE = 8;
+
 function App() {
-  const [products, setProducts] = useState(productsData);
+  // normalize incoming product data to stable types
+  const normalizedProducts = useMemo(() => {
+    return (productsData || []).map((p, idx) => ({
+      id: Number(p.id ?? idx + 1),
+      name: p.name ?? "",
+      category: p.category ?? "",
+      description: p.description ?? "",
+      price: Number(p.price ?? 0),
+      stock: Number(p.stock ?? 0),
+      createdAt: p.createdAt ?? new Date().toISOString(),
+      isActive: p.isActive !== undefined ? Boolean(p.isActive) : true,
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      ...p,
+    }));
+  }, [productsData]);
+
+  const [products, setProducts] = useState(normalizedProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("card");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const itemsPerPage = 8;
+  const itemsPerPage = ITEMS_PER_PAGE;
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    const term = debouncedSearchTerm.trim().toLowerCase();
+    if (!term) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(term));
+  }, [products, debouncedSearchTerm]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   useEffect(() => {
+    // When a new search starts, go back to first page
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
-  const handleAddProduct = () => {
+  // clamp current page if filtered list shrinks
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const currentProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  const handleAddProduct = useCallback(() => {
     setEditingProduct(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditProduct = (product) => {
+  const handleEditProduct = useCallback((product) => {
     setEditingProduct(product);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleSaveProduct = (productData) => {
-    if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === productData.id ? productData : p))
-      );
-    } else {
-      const newProduct = {
-        ...productData,
-        id: Math.max(...products.map((p) => p.id)) + 1,
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        tags: [],
-      };
-      setProducts((prev) => [...prev, newProduct]);
-    }
+  // Use productData.id to decide update vs create — avoids reliance on outer editingProduct closure
+  const handleSaveProduct = useCallback((productData) => {
+    setProducts((prev) => {
+      if (productData?.id) {
+        return prev.map((p) =>
+          p.id === productData.id
+            ? {
+                ...productData,
+                price: Number(productData.price),
+                stock: Number(productData.stock),
+              }
+            : p
+        );
+      } else {
+        const maxId = prev.length ? Math.max(...prev.map((p) => p.id)) : 0;
+        const newProduct = {
+          ...productData,
+          id: maxId + 1,
+          price: Number(productData.price),
+          stock: Number(productData.stock),
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          tags: [],
+        };
+        return [newProduct, ...prev];
+      }
+    });
+
     setIsFormOpen(false);
     setEditingProduct(null);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setIsFormOpen(false);
     setEditingProduct(null);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -82,6 +125,7 @@ function App() {
             <div className="relative flex-1 w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
+                aria-label="Search products"
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
@@ -93,6 +137,7 @@ function App() {
             <div className="flex gap-2">
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
+                  type="button"
                   onClick={() => setViewMode("card")}
                   className={`p-2 rounded transition-colors ${
                     viewMode === "card"
@@ -100,10 +145,12 @@ function App() {
                       : "text-gray-600 hover:text-gray-800"
                   }`}
                   title="Card view"
+                  aria-label="Card view"
                 >
                   <Grid3x3 className="w-5 h-5" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded transition-colors ${
                     viewMode === "list"
@@ -111,14 +158,17 @@ function App() {
                       : "text-gray-600 hover:text-gray-800"
                   }`}
                   title="List view"
+                  aria-label="List view"
                 >
                   <List className="w-5 h-5" />
                 </button>
               </div>
 
               <button
+                type="button"
                 onClick={handleAddProduct}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                aria-label="Add product"
               >
                 <Plus className="w-5 h-5" />
                 Add Product
@@ -126,15 +176,12 @@ function App() {
             </div>
           </div>
 
-          {searchTerm && (
-            <div className="mt-4 text-sm text-gray-600">
-              Found {filteredProducts.length} product
-              {filteredProducts.length !== 1 ? "s" : ""}
-              {debouncedSearchTerm !== searchTerm && (
-                <span className="ml-2 text-gray-400">(searching...)</span>
-              )}
-            </div>
-          )}
+          <div className="mt-4 text-sm text-gray-600" aria-live="polite">
+            Showing {filteredProducts.length} of {products.length} products
+            {debouncedSearchTerm !== searchTerm && searchTerm && (
+              <span className="ml-2 text-gray-400">(searching...)</span>
+            )}
+          </div>
         </div>
 
         {currentProducts.length === 0 ? (
