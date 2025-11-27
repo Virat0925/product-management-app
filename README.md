@@ -111,7 +111,7 @@ npm run dev
 
 
 App will be available at:
-product-management-app-theta.vercel.app
+[product-management-app-mocha-beta.vercel.app](https://product-management-app-mocha-beta.vercel.app/)
 
 🌐 Deployment
 
