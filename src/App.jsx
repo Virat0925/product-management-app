@@ -10,7 +10,6 @@ import productsData from "./data/products.json";
 const ITEMS_PER_PAGE = 8;
 
 function App() {
-  // normalize incoming product data to stable types
   const normalizedProducts = useMemo(() => {
     return (productsData || []).map((p, idx) => ({
       id: Number(p.id ?? idx + 1),
@@ -45,11 +44,9 @@ function App() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   useEffect(() => {
-    // When a new search starts, go back to first page
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
-  // clamp current page if filtered list shrinks
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -71,7 +68,6 @@ function App() {
     setIsFormOpen(true);
   }, []);
 
-  // Use productData.id to decide update vs create — avoids reliance on outer editingProduct closure
   const handleSaveProduct = useCallback((productData) => {
     setProducts((prev) => {
       if (productData?.id) {

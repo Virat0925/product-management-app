@@ -42,7 +42,6 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
     if (clamped !== currentPage) onPageChange(clamped);
   };
 
-  // nothing to render
   if (!totalPages || totalPages <= 1) return null;
 
   return (
@@ -67,7 +66,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         const key = isEllipsis ? `ellipsis-${index}` : `page-${page}`;
 
         if (isEllipsis) {
-          // Render a non-interactive ellipsis element instead of a disabled button
+          
           return (
             <span
               key={key}

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
 export default function ProductForm({ product = null, onSave, onClose }) {
-  // Keep form inputs as strings for controlled inputs
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -14,7 +13,6 @@ export default function ProductForm({ product = null, onSave, onClose }) {
   const [errors, setErrors] = useState({});
   const nameInputRef = useRef(null);
 
-  // Populate form when editing; reset when opening for new product
   useEffect(() => {
     if (product) {
       setFormData({
@@ -97,13 +95,11 @@ export default function ProductForm({ product = null, onSave, onClose }) {
 
     if (!validateForm()) return;
 
-    // Coerce numeric fields
     const parsedPrice = parseFloat(formData.price);
     const parsedStock =
       formData.stock === "" ? 0 : parseInt(formData.stock, 10);
 
     const productData = {
-      // if editing, keep original fields (including id)
       ...(product ?? {}),
       name: formData.name.trim(),
       price: parsedPrice,
@@ -118,11 +114,9 @@ export default function ProductForm({ product = null, onSave, onClose }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // For numeric inputs, allow empty string and basic cleaning
-    // but keep as string in state to preserve controlled input behavior
+   
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // clear error for this field as soon as user types
     if (errors[name]) {
       setErrors((prev) => {
         const copy = { ...prev };

@@ -10,7 +10,6 @@ function ProductCard({ product = {}, onEdit = () => {} }) {
     stock = 0,
   } = product;
 
-  // format price consistently (you can swap to Intl if you want)
   const formattedPrice = `₹${Number(price).toLocaleString("en-IN")}`;
 
   return (
